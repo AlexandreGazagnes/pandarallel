@@ -57,12 +57,25 @@ def _chunk(nb_item, nb_chunks):
             in zip(shifted_accumulated, accumulated)
         ]
 
+
+# new funct, do not work BUT good idea of implementation
+
 def _parallel(nb_workers, client):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            """Please see the docstring of this method without `parallel`"""
+
+    class decorator(object) :
+
+        def __init__(self, funct) :
+            """init method"""
+
+            self.funct      = funct
+            self.__doc__    = func.__doc__
+            self.__name__   = func.__name__
+
+        def __call__(self, *args, **kwargs) :
+            """call method"""
+
             try:
-                return func(*args, **kwargs)
+                return self.funct(*args, **kwargs)
 
             except _PlasmaStoreFull:
                 msg = f"The pandarallel shared memory is too small to allow \
@@ -75,8 +88,38 @@ pandarallel.initialize(<size of memory in Mo>), and retry."
             finally:
                 client.delete(client.list().keys())
 
-        return wrapper
+        def __doc__(self) : 
+            """doc method"""
+
+            _doc = eval(f"pd.DataFrame.{self.__name__}.__doc__")
+            return _doc
+
     return decorator
+
+
+# old funct (still functionnal)
+
+# def _parallel(nb_workers, client):
+#     def decorator(func):
+#         def wrapper(*args, **kwargs):
+#             """Please see the docstring of this method without `parallel`"""
+#             try:
+#                 return func(*args, **kwargs)
+
+#             except _PlasmaStoreFull:
+#                 msg = f"The pandarallel shared memory is too small to allow \
+# parallel computation. \
+# Just after pandarallel import, please write: \
+# pandarallel.initialize(<size of memory in Mo>), and retry."
+
+#                 raise Exception(msg)
+
+#             finally:
+#                 client.delete(client.list().keys())
+
+#         return wrapper
+#     return decorator
+
 
 class _DataFrame:
     @staticmethod
